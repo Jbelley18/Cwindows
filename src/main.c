@@ -3,6 +3,7 @@
 #include "window_enum.h"
 #include "layout_tile.h"
 #include "tray_icon.h"
+#include "config.h"
 
 #define HOTKEY_ENUM 1
 #define HOTKEY_TILE 2
@@ -11,18 +12,12 @@
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
     HWND trayWindow = create_tray_window(hInstance);
     setup_tray_icon(trayWindow);
+    
+    load_config("config.toml");
 
-    // Register hotkey: Ctrl + Alt + H (prints message box)
-    if (!RegisterHotKey(NULL, HOTKEY_ENUM, MOD_CONTROL | MOD_ALT, 0x48)) {
-        printf("Failed to register hotkey H\n");
-        return 1;
-    }
+    RegisterHotKey(NULL, HOTKEY_ENUM, hotkeys.info.modifiers, hotkeys.info.key);
+    RegisterHotKey(NULL, HOTKEY_TILE, hotkeys.tile.modifiers, hotkeys.tile.key);
 
-    // Register hotkey: Ctrl + Alt + Y (will trigger tiling later)
-    if (!RegisterHotKey(NULL, HOTKEY_TILE, MOD_CONTROL | MOD_ALT, 0x59)) {
-        printf("Failed to register hotkey Y\n");
-        return 1;
-    }
 
     printf("Listening for hotkeys...\n");
 
