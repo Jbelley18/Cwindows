@@ -1,36 +1,50 @@
 #include <windows.h>
 #include <stdio.h>
+#include "window_enum.h"
+#include "layout_tile.h"
+#include "tray_icon.h"
 
-BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam) {
-    char title[256];
-    if (IsWindowVisible(hwnd) && GetWindowTextA(hwnd, title, sizeof(title)) && title[0]) {
-        printf("HWND: 0x%p - Title: %s\n", hwnd, title);
-    }
-    return TRUE;
-}
+#define HOTKEY_ENUM 1
+#define HOTKEY_TILE 2
 
-int main() {
-    // Register global hotkey: Ctrl + Alt + H
-    if (!RegisterHotKey(NULL, 1, MOD_CONTROL | MOD_ALT, 0x48)) { // 0x48 = 'H'
-        printf("Failed to register hotkey\n");
+
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
+    HWND trayWindow = create_tray_window(hInstance);
+    setup_tray_icon(trayWindow);
+
+    // Register hotkey: Ctrl + Alt + H (prints message box)
+    if (!RegisterHotKey(NULL, HOTKEY_ENUM, MOD_CONTROL | MOD_ALT, 0x48)) {
+        printf("Failed to register hotkey H\n");
         return 1;
     }
 
-    printf("Enumerating windows:\n");
-    EnumWindows(EnumWindowsProc, 0);
+    // Register hotkey: Ctrl + Alt + Y (will trigger tiling later)
+    if (!RegisterHotKey(NULL, HOTKEY_TILE, MOD_CONTROL | MOD_ALT, 0x59)) {
+        printf("Failed to register hotkey Y\n");
+        return 1;
+    }
 
-    printf("\nListening for hotkey: Ctrl + Alt + H...\n");
+    printf("Listening for hotkeys...\n");
 
-    // Message loop to detect hotkey press
     MSG msg = {0};
     while (GetMessage(&msg, NULL, 0, 0)) {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+
         if (msg.message == WM_HOTKEY) {
-            printf("Hotkey pressed!\n");
-            MessageBox(NULL, "Hotkey Activated!", "Hotkey Event", MB_OK);
+            if (msg.wParam == HOTKEY_ENUM) {
+                printf("Hotkey H pressed!\n");
+                MessageBox(NULL, "Hotkey H Activated!", "Hotkey", MB_OK);
+            } else if (msg.wParam == HOTKEY_TILE) {
+                HWND hwndList[32];
+                int count = collect_visible_windows(hwndList, 32);
+                tile_windows(hwndList, count);
+            }
         }
     }
 
-    // Unregister hotkey on exit (optional)
-    UnregisterHotKey(NULL, 1);
+    UnregisterHotKey(NULL, HOTKEY_ENUM);
+    UnregisterHotKey(NULL, HOTKEY_TILE);
+    cleanup_tray_icon();
     return 0;
 }
