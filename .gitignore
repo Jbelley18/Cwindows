@@ -1,3 +1,13 @@
+# Build outputs
 *.exe
-*.ps1
-*.vscode
+*.o
+
+# VS Code
+.vscode/
+
+# Logs / cache
+*.log
+
+# Anything in a future build/ or bin/ folder
+/build/
+/bin/
