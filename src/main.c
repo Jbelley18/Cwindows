@@ -15,11 +15,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     
     load_config("config.toml");
 
-    RegisterHotKey(NULL, HOTKEY_ENUM, hotkeys.info.modifiers, hotkeys.info.key);
-    RegisterHotKey(NULL, HOTKEY_TILE, hotkeys.tile.modifiers, hotkeys.tile.key);
-
-
-    printf("Listening for hotkeys...\n");
+    if (!RegisterHotKey(NULL, HOTKEY_ENUM, hotkeys.info.modifiers, hotkeys.info.key)) {
+        printf("Failed to register INFO hotkey. Error: %lu\n", GetLastError());
+    } else {
+        printf("Registered INFO hotkey (mod=0x%X, key=0x%X)\n", hotkeys.info.modifiers, hotkeys.info.key);
+    }
+    
+    if (!RegisterHotKey(NULL, HOTKEY_TILE, hotkeys.tile.modifiers, hotkeys.tile.key)) {
+        printf("Failed to register TILE hotkey. Error: %lu\n", GetLastError());
+    } else {
+        printf("Registered TILE hotkey (mod=0x%X, key=0x%X)\n", hotkeys.tile.modifiers, hotkeys.tile.key);
+    }
+    
 
     MSG msg = {0};
     while (GetMessage(&msg, NULL, 0, 0)) {
@@ -27,15 +34,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         DispatchMessage(&msg);
 
         if (msg.message == WM_HOTKEY) {
+            printf("Hotkey triggered: ID=%llu\n", (unsigned long long)msg.wParam);
             if (msg.wParam == HOTKEY_ENUM) {
                 printf("Hotkey H pressed!\n");
                 MessageBox(NULL, "Hotkey H Activated!", "Hotkey", MB_OK);
             } else if (msg.wParam == HOTKEY_TILE) {
+                printf("Hotkey triggered: TILE (mod=0x%X, key=0x%X)\n", hotkeys.tile.modifiers, hotkeys.tile.key);
+        
                 HWND hwndList[32];
                 int count = collect_visible_windows(hwndList, 32);
                 tile_windows(hwndList, count);
             }
         }
+        
     }
 
     UnregisterHotKey(NULL, HOTKEY_ENUM);

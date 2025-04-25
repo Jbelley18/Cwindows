@@ -17,4 +17,12 @@ extern HotkeyConfig hotkeys;
 
 void load_config(const char* path);
 
+typedef enum {
+    LAYOUT_HORIZONTAL,
+    LAYOUT_VERTICAL
+} LayoutType;
+
+extern LayoutType current_layout;
+
+
 #endif

@@ -4,11 +4,11 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "config.h"    // ✅ Needs to come before usage of `HotkeyConfig`
+#include "config.h"
 #include "toml.h"
 
-
 HotkeyConfig hotkeys;
+LayoutType current_layout = LAYOUT_HORIZONTAL;  // default fallback
 
 static UINT parse_modifiers(const char* str) {
     UINT mods = 0;
@@ -53,10 +53,25 @@ void load_config(const char* path) {
         exit(1);
     }
 
+    // Load hotkeys
     toml_table_t* hotkey_table = toml_table_in(conf, "hotkeys");
     if (hotkey_table) {
         load_hotkey(hotkey_table, "tile", &hotkeys.tile);
         load_hotkey(hotkey_table, "info", &hotkeys.info);
+    }
+
+    // Load layout type
+    const char* raw_layout = toml_raw_in(conf, "layout");
+    if (raw_layout) {
+        char* parsed = NULL;
+        if (toml_rtos(raw_layout, &parsed) == 0) {
+            if (_stricmp(parsed, "vertical") == 0) {
+                current_layout = LAYOUT_VERTICAL;
+            } else {
+                current_layout = LAYOUT_HORIZONTAL;
+            }
+            free(parsed);
+        }
     }
 
     toml_free(conf);
